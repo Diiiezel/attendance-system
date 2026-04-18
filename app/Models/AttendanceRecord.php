@@ -11,4 +11,14 @@ class AttendanceRecord extends Model
         'attendance_session_id',
         'method'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function session()
+    {
+        return $this->belongsTo(AttendanceSession::class, 'attendance_session_id');
+    }
 }

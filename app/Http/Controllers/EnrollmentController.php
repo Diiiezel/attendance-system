@@ -9,11 +9,24 @@ class EnrollmentController extends Controller
 {
     public function enroll(Request $request)
     {
-        $enrollment = Enrollment::create([
-            'user_id' => $request->user_id,
+        $request->validate([
+            'course_id' => 'required|exists:courses,id'
+        ]);
+
+        if ($request->user()->role != 'student') {
+            return response()->json([
+                'message' => 'Only students can enroll'
+            ], 403);
+        }
+
+        $enrollment = Enrollment::firstOrCreate([
+            'user_id' => $request->user()->id,
             'course_id' => $request->course_id
         ]);
 
-        return response()->json($enrollment);
+        return response()->json([
+            'message' => 'Enrolled successfully',
+            'data' => $enrollment
+        ], 201);
     }
 }

@@ -2,41 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AttendanceSession;
+use App\Models\Course;
+use Illuminate\Http\Request;
 
 class AttendanceSessionController extends Controller
 {
-    // فتح session
     public function create(Request $request)
     {
         $request->validate([
-            'course_id' => 'required|exists:courses,id'
+            'course_id' => 'required|exists:courses,id',
         ]);
 
-        // check لو في session مفتوحة
-        $existing = AttendanceSession::where('course_id', $request->course_id)
-            ->where('status', 'open')
-            ->first();
+        $user = auth()->user();
 
-        if ($existing) {
+        if ($user->role !== 'doctor') {
             return response()->json([
-                'message' => 'Session already open'
-            ], 409);
+                'message' => 'Only doctors can create sessions'
+            ], 403);
+        }
+
+        $course = Course::find($request->course_id);
+
+        if ($course->doctor_id != $user->id) {
+            return response()->json([
+                'message' => 'You do not own this course'
+            ], 403);
         }
 
         $session = AttendanceSession::create([
-            'course_id' => $request->course_id,
-            'status' => 'open'
+            'course_id'  => $request->course_id,
+            'created_by' => $user->id,
+            'status'     => 'open',
         ]);
 
         return response()->json([
-            'message' => 'Session created',
+            'message' => 'Session created successfully',
             'data' => $session
-        ]);
+        ], 201);
     }
 
-    // قفل session
     public function close($id)
     {
         $session = AttendanceSession::find($id);
@@ -47,16 +52,12 @@ class AttendanceSessionController extends Controller
             ], 404);
         }
 
-        if ($session->status === 'closed') {
-            return response()->json([
-                'message' => 'Session already closed'
-            ], 400);
-        }
-
-        $session->update(['status' => 'closed']);
+        $session->status = 'closed';
+        $session->save();
 
         return response()->json([
-            'message' => 'Session closed'
+            'message' => 'Session closed successfully',
+            'data' => $session
         ]);
     }
 }

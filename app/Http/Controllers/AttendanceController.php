@@ -6,11 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\Enrollment;
-use Illuminate\Database\Eloquent\Model;
 
 class AttendanceController extends Controller
 {
-    // تسجيل الحضور
     public function mark(Request $request)
     {
         $request->validate([
@@ -19,7 +17,6 @@ class AttendanceController extends Controller
             'method' => 'required'
         ]);
 
-        // check session
         $session = AttendanceSession::find($request->session_id);
 
         if ($session->status !== 'open') {
@@ -28,7 +25,6 @@ class AttendanceController extends Controller
             ], 400);
         }
 
-        // check enrollment
         $enrolled = Enrollment::where('user_id', $request->user_id)
             ->where('course_id', $session->course_id)
             ->exists();
@@ -39,22 +35,22 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // prevent duplicate
         $exists = AttendanceRecord::where('user_id', $request->user_id)
             ->where('attendance_session_id', $request->session_id)
             ->exists();
 
         if ($exists) {
             return response()->json([
-                'message' => 'Attendance already recorded'
+                'message' => 'Student already marked present'
             ], 409);
         }
 
-        // save attendance
         $attendance = AttendanceRecord::create([
             'user_id' => $request->user_id,
             'attendance_session_id' => $request->session_id,
-            'method' => $request->input('method')        ]);
+            'method' => $request->input('method'),
+            'status' => 'present'
+        ]);
 
         return response()->json([
             'message' => 'Attendance marked successfully',
@@ -62,17 +58,14 @@ class AttendanceController extends Controller
         ]);
     }
 
-    // تقرير الحضور
     public function report($session_id)
     {
         $session = AttendanceSession::findOrFail($session_id);
 
-        // كل الطلبة في الكورس
         $students = Enrollment::where('course_id', $session->course_id)
             ->with('user')
             ->get();
 
-        // الطلبة اللي حضروا
         $attended = AttendanceRecord::where('attendance_session_id', $session_id)
             ->pluck('user_id')
             ->toArray();

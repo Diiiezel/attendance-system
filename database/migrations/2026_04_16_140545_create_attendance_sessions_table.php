@@ -6,22 +6,30 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('attendance_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('course_id')->constrained()->onDelete('cascade');
+
+            $table->foreignId('course_id')
+                ->constrained('courses')
+                ->onDelete('cascade');
+
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->onDelete('cascade');
+
+            $table->enum('method', ['face', 'qr', 'both'])->default('face');
+
             $table->enum('status', ['open', 'closed'])->default('open');
+
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('attendance_sessions');
