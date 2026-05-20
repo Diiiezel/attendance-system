@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -14,18 +15,22 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
+            'password' => 'required|min:6|confirmed',
             'role' => 'required|in:student,doctor',
+
+            'university_code' => 'required_if:role,student|nullable|string|unique:users,university_code',
+            'major' => 'required_if:role,student|nullable|string',
+            'level' => 'required_if:role,student|nullable|integer',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'role' => $request->role,
-            'university_code' => $request->university_code,
-            'major' => $request->major,
-            'level' => $request->level,
+            'university_code' => $request->role === 'student' ? $request->university_code : null,
+            'major' => $request->role === 'student' ? $request->major : null,
+            'level' => $request->role === 'student' ? $request->level : null,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -76,5 +81,21 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'new_password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password reset successfully'
+        ]);
     }
 }

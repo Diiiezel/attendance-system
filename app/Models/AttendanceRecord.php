@@ -9,7 +9,8 @@ class AttendanceRecord extends Model
     protected $fillable = [
         'user_id',
         'attendance_session_id',
-        'method'
+        'method',
+        'status'
     ];
 
     public function user()

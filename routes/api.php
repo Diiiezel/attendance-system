@@ -24,6 +24,7 @@ Route::get('/test', function () {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 
 /*
 |--------------------------------------------------------------------------
@@ -56,9 +57,14 @@ Route::middleware(['auth:sanctum', 'role:doctor'])->group(function () {
     Route::get('/sessions/{id}/report', [AttendanceController::class, 'report']);
 
     Route::get('/courses/{id}/report', [ReportController::class, 'courseReport']);
+
     Route::get('/courses/{id}/export', [ReportController::class, 'exportCourseReport']);
 
     Route::post('/face/verify', [FaceController::class, 'verify']);
+
+    Route::post('/face/verify-and-mark', [FaceController::class, 'verifyAndMark']);
+
+    Route::post('/qr/scan', [QrController::class, 'scan']);
 });
 
 /*
@@ -71,11 +77,17 @@ Route::middleware(['auth:sanctum', 'role:student'])->group(function () {
 
     Route::post('/face/register', [FaceController::class, 'register']);
 
+    Route::get('/my-courses', [EnrollmentController::class, 'myCourses']);
+
+    Route::get('/available-courses', [EnrollmentController::class, 'availableCourses']);
+
     Route::post('/enroll', [EnrollmentController::class, 'enroll']);
 
     Route::post('/attendance', [AttendanceController::class, 'mark']);
 
     Route::get('/students/{id}/report', [ReportController::class, 'studentReport']);
+
+    Route::get('/my-report', [ReportController::class, 'myReport']);
 
 
 });
