@@ -37,6 +37,9 @@ class CourseReportExport implements FromArray
             ->where('course_id', $this->courseId)
             ->get();
 
+        $presentStudents = [];
+        $absentStudents = [];
+
         foreach ($students as $enrollment) {
             $student = $enrollment->user;
 
@@ -46,11 +49,25 @@ class CourseReportExport implements FromArray
                 })
                 ->exists();
 
-            $rows[] = [
+            $studentRow = [
                 $student->university_code,
                 $student->name,
                 $present ? 'Present' : 'Absent'
             ];
+
+            if ($present) {
+                $presentStudents[] = $studentRow;
+            } else {
+                $absentStudents[] = $studentRow;
+            }
+        }
+
+        foreach ($presentStudents as $student) {
+            $rows[] = $student;
+        }
+
+        foreach ($absentStudents as $student) {
+            $rows[] = $student;
         }
 
         return $rows;

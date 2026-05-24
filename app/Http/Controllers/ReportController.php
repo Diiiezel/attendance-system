@@ -8,6 +8,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Enrollment;
 use App\Exports\CourseReportExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\SessionReportExport;
 
 class ReportController extends Controller
 {
@@ -149,6 +150,24 @@ class ReportController extends Controller
 
         return Excel::download(
             new CourseReportExport($id),
+            $fileName
+        );
+    }
+    public function exportSessionReport($id)
+    {
+        $session = \App\Models\AttendanceSession::with('course')->find($id);
+
+        if (!$session) {
+            return response()->json([
+                'message' => 'Session not found'
+            ], 404);
+        }
+
+        $fileName = str_replace(' ', '_', $session->course->name)
+            . '_Session_' . $session->id . '_Report.xlsx';
+
+        return Excel::download(
+            new SessionReportExport($id),
             $fileName
         );
     }

@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'role:doctor'])->group(function () {
     Route::get('/courses/{id}/report', [ReportController::class, 'courseReport']);
 
     Route::get('/courses/{id}/export', [ReportController::class, 'exportCourseReport']);
+    Route::get('/sessions/{id}/export', [ReportController::class, 'exportSessionReport']);
 
     Route::post('/face/verify', [FaceController::class, 'verify']);
 
