@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\AttendanceRecord;
 use Maatwebsite\Excel\Concerns\FromArray;
 
 class CourseReportExport implements FromArray
@@ -20,54 +19,29 @@ class CourseReportExport implements FromArray
     {
         $rows = [];
 
-        $course = Course::find($this->courseId);
+        $course = Course::with('sessions')->find($this->courseId);
 
         $rows[] = ['Course Name', $course->name];
         $rows[] = ['Course Code', $course->code];
-        $rows[] = ['Semester', $course->semester];
+        $rows[] = ['Total Sessions', $course->sessions->count()];
         $rows[] = [];
 
         $rows[] = [
-            'University code',
-            'Full name',
-            'Status'
+            'University Code',
+            'Full Name'
         ];
 
         $students = Enrollment::with('user')
             ->where('course_id', $this->courseId)
             ->get();
 
-        $presentStudents = [];
-        $absentStudents = [];
-
         foreach ($students as $enrollment) {
             $student = $enrollment->user;
 
-            $present = AttendanceRecord::where('user_id', $student->id)
-                ->whereHas('session', function ($q) {
-                    $q->where('course_id', $this->courseId);
-                })
-                ->exists();
-
-            $studentRow = [
+            $rows[] = [
                 $student->university_code,
-                $student->name,
-                $present ? 'Present' : 'Absent'
+                $student->name
             ];
-
-            if ($present) {
-                $presentStudents[] = $studentRow;
-            } else {
-                $absentStudents[] = $studentRow;
-            }
-        }
-
-        foreach ($presentStudents as $student) {
-            $rows[] = $student;
-        }
-
-        foreach ($absentStudents as $student) {
-            $rows[] = $student;
         }
 
         return $rows;
